@@ -28,11 +28,9 @@ def softmax(X):
     ### YOUR CODE HERE no for loops please
     e = np.exp(X)
     denoms = sum(e.T)
-    res = np.array([e[i] / denoms[i] for i in range(len(X))])
+    res = np.array((e.T / denoms).T)
     ### END CODE
     return res
-    
-    
     
 def one_in_k_encoding(vec, k):
     """ One-in-k encoding of vector to k classes 
@@ -103,8 +101,10 @@ class SoftmaxClassifier():
         for i in range(epochs):
             print("starting epoch: ", i)
             p = np.random.permutation(range(len(Y)))
+            Xp = X[p]
+            Yp = Y[p]
             for j in range(int( len(Y) / batch_size + 0.5)):
-                W = W - lr * self.cost_grad(np.array([X[i] for i in p[b*j : b*(j + 1)]]), np.array([Y[i] for i in p[b*j : b * (j + 1)]]), W)[1]
+                W = W - lr * self.cost_grad(Xp[b*j : b*(j + 1)], np.array(Yp[b*j : b * (j + 1)]), W)[1]
             print("calculating history for epoch: ", i)
             history = history + [self.cost_grad(X, Y, W, 0)[0]]
         ### END CODE
