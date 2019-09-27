@@ -26,9 +26,9 @@ def softmax(X):
     """
     res = np.zeros(X.shape)
     ### YOUR CODE HERE no for loops please
-    e = np.exp(X)
-    denoms = sum(e.T)
-    res = np.array([e[i] / denoms[i] for i in range(len(X))])
+    e = np.exp(X).T
+    denoms = sum(e)
+    res = (e / denoms).T
     ### END CODE
     return res
     
@@ -70,11 +70,10 @@ class SoftmaxClassifier():
         grad = np.zeros(W.shape)*np.nan
         Yk = one_in_k_encoding(y, self.num_classes) # may help - otherwise you may remove it
         ### YOUR CODE HERE
-        p = X.dot(W)
-        s = softmax(p)
-        cost = - 1 / len(y) * sum(sum(Yk * np.log(s)))
+        sm = softmax(X.dot(W))
+        cost = - 1 / len(y) * sum(sum(Yk * np.log(sm)))
         if calculateGrad:
-            grad = - 1 / len(y) * X.T.dot(Yk - s)
+            grad = - 1 / len(y) * X.T.dot(Yk - sm)
         ### END CODE
         return cost, grad
 
@@ -103,8 +102,10 @@ class SoftmaxClassifier():
         for i in range(epochs):
             print("starting epoch: ", i)
             p = np.random.permutation(range(len(Y)))
+            Xp = X[p]
+            Yp = Y[p]
             for j in range(int( len(Y) / batch_size + 0.5)):
-                W = W - lr * self.cost_grad(np.array([X[i] for i in p[b*j : b*(j + 1)]]), np.array([Y[i] for i in p[b*j : b * (j + 1)]]), W)[1]
+                W = W - lr * self.cost_grad(Xp[b*j : b*(j + 1)], Yp[b*j : b * (j + 1)], W)[1]
             print("calculating history for epoch: ", i)
             history = history + [self.cost_grad(X, Y, W, 0)[0]]
         ### END CODE
@@ -124,7 +125,7 @@ class SoftmaxClassifier():
 
         ### YOUR CODE HERE 1-4 lines
         prediction = self.predict(X)
-        out =  1 / len(Y) * sum([(prediction[i] == Y[i]) for i in range(len(Y))])
+        out =  1 / len(Y) * sum(prediction == Y)
         ### END CODE
         return out
 

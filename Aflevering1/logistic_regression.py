@@ -66,8 +66,10 @@ class LogisticRegressionClassifier():
         ### YOUR CODE HERE 14 - 20 lines
         for i in range(epochs):
             p = np.random.permutation(range(len(y)))
+            Xp = X[p]
+            yp = y[p]
             for j in range(int( len(y) / batch_size + 0.5)):
-                w = w - lr * self.cost_grad(np.array([X[i] for i in p[b*j : b*(j + 1)]]), np.array([y[i] for i in p[b*j : b * (j + 1)]]), w)[1]
+                w = w - lr * self.cost_grad(Xp[b*j : b*(j + 1)], yp[b*j : b * (j + 1)], w)[1]
             history = history + [self.cost_grad(X, y, w)[0]]
                         
         ### END CODE

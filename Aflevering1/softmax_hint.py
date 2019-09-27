@@ -124,7 +124,7 @@ class SoftmaxClassifier():
 
         ### YOUR CODE HERE 1-4 lines
         prediction = self.predict(X)
-        out =  1 / len(Y) * sum([(prediction[i] == Y[i]) for i in range(len(Y))])
+        out =  1 / len(Y) * sum(prediction == Y)
         ### END CODE
         return out
 
