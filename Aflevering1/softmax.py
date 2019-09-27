@@ -26,6 +26,9 @@ def softmax(X):
     """
     res = np.zeros(X.shape)
     ### YOUR CODE HERE no for loops please
+    e = np.exp(X)
+    denoms = sum(e.T)
+    res = np.array([e[i] / denoms[i] for i in range(len(X))])
     ### END CODE
     return res
 
@@ -47,7 +50,7 @@ class SoftmaxClassifier():
         self.num_classes = num_classes
         self.W = None
         
-    def cost_grad(self, X, y, W):
+    def cost_grad(self, X, y, W, calculateGrad = 1):
         """ 
         Compute the average negative log likelihood cost and the gradient under the softmax model 
         using data X, Y and weight vector W.
@@ -65,6 +68,11 @@ class SoftmaxClassifier():
         grad = np.zeros(W.shape)*np.nan
         Yk = one_in_k_encoding(y, self.num_classes) # may help - otherwise you may remove it
         ### YOUR CODE HERE
+        p = X.dot(W)
+        s = softmax(p)
+        cost = - 1 / len(y) * sum(sum(Yk * np.log(s)))
+        if calculateGrad:
+            grad = - 1 / len(y) * X.T.dot(Yk - s)
         ### END CODE
         return cost, grad
 
@@ -86,9 +94,17 @@ class SoftmaxClassifier():
            W: numpy array shape (d, K) learned weight vector matrix  W
            history: list/np.array len epochs - value of cost function after every epoch. You know for plotting
         """
+        b = batch_size
         if W is None: W = np.zeros((X.shape[1], self.num_classes))
         history = []
         ### YOUR CODE HERE
+        for i in range(epochs):
+            print("starting epoch: ", i)
+            p = np.random.permutation(range(len(Y)))
+            for j in range(int( len(Y) / batch_size + 0.5)):
+                W = W - lr * self.cost_grad(np.array([X[i] for i in p[b*j : b*(j + 1)]]), np.array([Y[i] for i in p[b*j : b * (j + 1)]]), W)[1]
+            print("calculating history for epoch: ", i)
+            history = history + [self.cost_grad(X, Y, W, 0)[0]]
         ### END CODE
         self.W = W
         self.history = history
@@ -103,8 +119,10 @@ class SoftmaxClassifier():
         Returns:
            out: float - mean accuracy
         """
-        out = 0
+
         ### YOUR CODE HERE 1-4 lines
+        prediction = self.predict(X)
+        out =  1 / len(Y) * sum([(prediction[i] == Y[i]) for i in range(len(Y))])
         ### END CODE
         return out
 
@@ -116,8 +134,8 @@ class SoftmaxClassifier():
         Returns
            out: np.array shape (n, ) - prediction on each data point (number in 0,1,..., num_classes
         """
-        out = None
         ### YOUR CODE HERE - 1-4 lines
+        out = np.array([np.argmax(x) for x in softmax(X.dot(self.W))])
         ### END CODE
         return out
 
@@ -127,6 +145,7 @@ def test_encoding():
     print('*'*10, 'test encoding')
     labels = np.array([0, 2, 1, 1])
     m = one_in_k_encoding(labels, 3)
+    print(m)
     res =  np.array([[1, 0 , 0], [0, 0, 1], [0, 1, 0], [0, 1, 0]])
     assert res.shape == m.shape, 'encoding shape mismatch'
     assert np.allclose(m, res), m - res
@@ -144,6 +163,19 @@ def test_softmax():
     print('Result of softmax: \n', sm)
     assert np.allclose(expected, sm), 'Expected {0} - got {1}'.format(expected, sm)
     print('Test complete')
+
+
+def test_cost():
+    print('*'*5, 'Testing  Cost')
+    X = np.array([[1.0, 0.0], [1.0, 1.0], [1.0, -1.0]])    
+    w = np.ones((2, 3))
+    print("w is;", w)
+    y = np.array([0, 1, 2])
+    scl = SoftmaxClassifier(num_classes=3)
+    x, y = scl.cost_grad(X, y, w)
+    expected =  -np.log(1 / 3)
+    assert np.allclose(x, expected), "Expected {0} - got {1}".format(expected, x)
+    print('Test Success')
         
 
 def test_grad():
@@ -160,4 +192,5 @@ def test_grad():
 if __name__ == "__main__":
     test_encoding()
     test_softmax()
+    test_cost()
     test_grad()
